@@ -14,7 +14,11 @@ const port = process.env.PORT || 3000;
 app.use(helmet()); // Security headers
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
-app.use(morgan("combined", { stream: { write: (message) => logger.info(message.trim()) } })); // HTTP logging
+app.use(
+  morgan("combined", {
+    stream: { write: (message) => logger.info(message.trim()) },
+  })
+); // HTTP logging
 
 // CORS configuration
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [
@@ -48,11 +52,16 @@ app.use(
 // Routes
 app.use("/api", routes);
 
+app.get("/", (req, res) => {
+  res.send("Hello from server");
+});
 // Health check
 app.get("/health", async (req, res) => {
   try {
     await db.query("SELECT 1");
-    res.status(200).json({ status: "OK", uptime: process.uptime(), database: "connected" });
+    res
+      .status(200)
+      .json({ status: "OK", uptime: process.uptime(), database: "connected" });
   } catch (err) {
     logger.error("Health check failed:", err);
     res.status(503).json({ status: "ERROR", database: "disconnected" });

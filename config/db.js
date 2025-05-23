@@ -21,7 +21,7 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  idleTimeoutMillis: 30000, // Close idle connections after 30 seconds
+ 
 });
 
 async function connectWithRetry(maxRetries = 5, delayMs = 5000) {
