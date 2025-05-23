@@ -6,7 +6,6 @@ import rateLimit from "express-rate-limit";
 import dotenv from "dotenv";
 import { db } from "./config/db.js";
 import logger from "./config/logger.js";
-import routes from "./routes/index.js";
 
 dotenv.config();
 
@@ -57,7 +56,6 @@ app.use(
 );
 
 // Routes
-app.use("/api", routes);
 
 app.get("/", (req, res) => {
   res.send("Hello from server");
