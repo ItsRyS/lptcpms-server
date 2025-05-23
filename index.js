@@ -3,24 +3,31 @@ import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
+import dotenv from "dotenv";
 import { db } from "./config/db.js";
 import logger from "./config/logger.js";
 import routes from "./routes/index.js";
 
+dotenv.config();
+
 const app = express();
 const port = process.env.PORT || 3000;
 
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
 // Middleware
-app.use(helmet()); // Security headers
-app.use(express.json()); // Parse JSON bodies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+app.use(helmet());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(
   morgan("combined", {
     stream: { write: (message) => logger.info(message.trim()) },
   })
-); // HTTP logging
+);
 
-// CORS configuration
+// CORS
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",") || [
   "https://lptcpms.vercel.app",
   "http://localhost:5173",
@@ -40,11 +47,11 @@ app.use(
   })
 );
 
-// Rate limiting
+// Rate Limiter
 app.use(
   rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per windowMs
+    windowMs: 15 * 60 * 1000,
+    max: 100,
     message: "Too many requests from this IP, please try again later.",
   })
 );
@@ -55,36 +62,30 @@ app.use("/api", routes);
 app.get("/", (req, res) => {
   res.send("Hello from server");
 });
-// Health check
+
 app.get("/health", async (req, res) => {
   try {
     await db.query("SELECT 1");
-    res
-      .status(200)
-      .json({ status: "OK", uptime: process.uptime(), database: "connected" });
+    res.status(200).json({ status: "OK", uptime: process.uptime(), database: "connected" });
   } catch (err) {
     logger.error("Health check failed:", err);
     res.status(503).json({ status: "ERROR", database: "disconnected" });
   }
 });
 
-// 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: "Endpoint not found" });
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
   logger.error("Unexpected error:", err);
   res.status(500).json({ error: "Internal server error" });
 });
 
-// Start server
 const server = app.listen(port, () => {
   logger.info(`App listening on port ${port}`);
 });
 
-// Graceful shutdown
 process.on("SIGTERM", () => {
   logger.info("SIGTERM received. Closing server...");
   server.close(() => {

@@ -21,7 +21,7 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
- 
+  connectTimeout: 10000,
 });
 
 async function connectWithRetry(maxRetries = 5, delayMs = 5000) {
@@ -35,7 +35,7 @@ async function connectWithRetry(maxRetries = 5, delayMs = 5000) {
       logger.error(`Attempt ${attempt} failed to connect to MySQL: ${err.message}`);
       if (attempt === maxRetries) {
         logger.error("Max retries reached. Database unavailable.");
-        return; // Do not exit process, let app handle it
+        return;
       }
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
